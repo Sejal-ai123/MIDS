@@ -1,0 +1,88 @@
+''' Install necessary libraries 
+!pip install textblob
+!pip install nltk
+!pip install pandas
+!pip install numpy
+!pip install matplotlib
+!pip install seaborn
+!pip install scikit-learn
+'''
+
+
+import textblob
+import nltk
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from textblob import TextBlob, Word
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, ConfusionMatrixDisplay
+
+###### Check the installation and versions ######
+print("NLTK version:", nltk.__version__)
+
+###### Download necessary NLTK data ######
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+nltk.download('punkt')
+
+###### Load the dataset ######
+df = pd.read_csv(r"C:\Users\RATHO\Downloads\MIDS Dataset\Mental-Health-Twitter.csv")  # Replace with your file path
+
+###### Data Preprocessing ######
+# Keep only the required column
+df = df[['post_text']]
+
+# Remove stopwords
+stop_words = set(stopwords.words('english'))
+df['post_text'] = df['post_text'].apply(lambda x: ' '.join(word for word in x.split() if word.lower() not in stop_words))
+
+# Lemmatization
+df['post_text'] = df['post_text'].apply(lambda x: ' '.join(Word(word).lemmatize() for word in x.split()))
+
+# Tokenization
+df['tokens'] = df['post_text'].apply(word_tokenize)
+
+###### Sentiment Analysis ######
+df['polarity'] = df['post_text'].apply(lambda x: TextBlob(x).sentiment.polarity)
+df['Sentiment'] = df['polarity'].apply(lambda x: 'Positive' if x >= 0 else 'Negative')
+
+###### Visualization: Sentiment Distribution ######
+plt.figure(figsize=(10,6))
+sns.countplot(x='Sentiment', data=df, order=df['Sentiment'].value_counts().index, palette='viridis', hue='Sentiment')
+plt.title('Sentiment Distribution')
+plt.xlabel('Sentiment')
+plt.ylabel('Count')
+plt.show()
+
+###### Prepare data for KNN ######
+X = df['post_text']
+y = df['Sentiment']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+###### Vectorization (Using TfidfVectorizer instead of CountVectorizer for better text representation) ######
+vectorizer = TfidfVectorizer()
+X_train_vec = vectorizer.fit_transform(X_train)
+X_test_vec = vectorizer.transform(X_test)
+
+###### KNN Classifier ######
+knn = KNeighborsClassifier()
+knn.fit(X_train_vec, y_train)
+
+###### Evaluation ######
+y_pred = knn.predict(X_test_vec)
+print('Accuracy:', accuracy_score(y_test, y_pred))
+print('\nClassification Report:\n', classification_report(y_test, y_pred))
+
+###### Confusion Matrix ######
+cm = confusion_matrix(y_test, y_pred)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=knn.classes_)
+disp.plot()
+plt.show()
+
