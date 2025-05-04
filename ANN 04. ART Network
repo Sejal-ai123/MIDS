@@ -1,0 +1,90 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define parameters
+num_input = 2  # Number of input neurons
+rho = 0.7  # Vigilance parameter
+theta = 0.5  # Matching parameter
+
+# Initialize weights
+W = np.random.rand(1, num_input) * 0.1  # Initial weight matrix
+bias = np.random.rand(1) * 0.1  # Bias vector
+
+# Input data
+X = np.array([[0, 0],
+              [0, 1],
+              [1, 0],
+              [1, 1]])
+
+clusters = []  # Store cluster assignments
+
+# Function to calculate the activation
+def calculate_activation(input_data):
+    activations = np.dot(W, input_data) + bias
+    return activations
+
+# Function to normalize the activations
+def normalize_activations(activations):
+    return activations / np.sum(activations)
+
+# Function to find the winning neuron
+def find_winner(activations):
+    return np.argmax(activations)
+
+# Function to update weights
+def update_weights(input_data, winner):
+    W[winner] = np.maximum(W[winner], input_data)
+    return W
+
+# Function to check vigilance with added check for division by zero
+def check_vigilance(input_data, winner):
+    weight_sum = np.sum(W[winner])
+    if weight_sum == 0:
+        return 0  # If weights are all zero, we return a vigilance of zero
+    return np.dot(W[winner], input_data) / weight_sum
+
+# Main loop
+print("\nProcessing Inputs:\n")
+for i in range(X.shape[0]):
+    input_data = X[i]
+    activations = calculate_activation(input_data)
+    normalized_activations = normalize_activations(activations)
+    winner = find_winner(normalized_activations)
+    
+    if np.max(normalized_activations) < theta:
+        print(f"No winner found for input {input_data}. Creating new cluster.")
+        W = np.vstack([W, input_data])
+        bias = np.append(bias, 0.1)
+        clusters.append(len(W) - 1)
+    else:
+        vigilance = check_vigilance(input_data, winner)
+        if vigilance > rho:
+            print(f"Input {input_data} accepted into cluster {winner}.\n")
+            W = update_weights(input_data, winner)
+            clusters.append(winner)
+        else:
+            print(f"Input {input_data} rejected. Creating new cluster.\n")
+            W = np.vstack([W, input_data])
+            bias = np.append(bias, 0.1)
+            clusters.append(len(W) - 1)
+
+print("\nFinal weights:\n")
+print(W)
+print("")
+
+# Plot the clustering results
+colors = ['red', 'blue', 'green', 'purple', 'orange', 'yellow', 'cyan', 'magenta', 'brown', 'pink']
+plt.figure(figsize=(6, 6))
+
+unique_clusters = list(set(clusters))
+color_map = {cluster: colors[i % len(colors)] for i, cluster in enumerate(unique_clusters)}
+
+for i, point in enumerate(X):
+    plt.scatter(point[0], point[1], color=color_map[clusters[i]], label=f'Cluster {clusters[i]}' if clusters[i] not in clusters[:i] else "")
+
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.title("ART Neural Network Clustering")
+plt.legend()
+plt.grid(True)
+plt.show()
