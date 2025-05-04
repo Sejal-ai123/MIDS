@@ -1,0 +1,90 @@
+#!
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+
+##### Load dataset #####
+df = pd.read_csv(r"C:\Users\RATHO\Downloads\MIDS Dataset\Titanic-Dataset.csv")
+
+######
+#2 Preview initial data
+print("Initial Dataset Sample:")
+print(df.head())
+
+######
+#3 Drop unnecessary columns safely 
+columns_to_drop = ['Cabin', 'PassengerId', 'Name', 'Ticket']
+df.drop(columns=[col for col in columns_to_drop if col in df.columns], inplace=True)
+
+######
+# Show updated columns
+print("\nAfter Dropping Unnecessary Columns:")
+print(df.head())
+
+######
+#4 Feature engineering 
+df['Family'] = df['SibSp'] + df['Parch'] + 1
+
+# Check new feature
+print("\nAfter Adding 'Family' Feature:")
+print(df[['SibSp', 'Parch', 'Family']].head())
+
+
+######
+#5 Handle missing values 
+df['Age'] = df['Age'].fillna(df['Age'].median())
+df['Embarked'] = df['Embarked'].fillna(df['Embarked'].mode()[0])
+
+# Confirm no missing values remain
+print("\nMissing Values After Filling:")
+print(df.isnull().sum())
+
+
+######
+#6 Encode categorical variables 
+df['Sex'] = df['Sex'].map({'male': 0, 'female': 1})
+df = pd.get_dummies(df, columns=['Embarked'], drop_first=True)
+
+# Show encoded data
+print("\nAfter Encoding Categorical Variables:")
+print(df.head())
+
+
+######
+#7 Standardize numerical features 
+scaler = StandardScaler()
+df[['Age', 'Fare']] = scaler.fit_transform(df[['Age', 'Fare']])
+
+# Check standardized values
+print("\nAfter Standardization of 'Age' and 'Fare':")
+print(df[['Age', 'Fare']].head())
+
+
+######
+#8 Correlation matrix 
+corm = df.corr(numeric_only=True)
+print('\nCorrelation Matrix with Target:')
+print(corm['Survived'].sort_values(ascending=False))
+
+
+######
+#9 Feature importance using Random Forest 
+x = df.drop('Survived', axis=1)
+y = df['Survived']
+model = RandomForestClassifier()
+model.fit(x, y)
+
+feature_importances = pd.Series(model.feature_importances_, index=x.columns)
+print('\nFeature Importances:')
+print(feature_importances.sort_values(ascending=False))
+
+
+
+''' For installing necessary libraries into Jupyter terminal 
+!pip install pandas
+!pip install numpy
+!pip install scikit-learn
+!pip install matplotlib
+!pip install seaborn
+'''
