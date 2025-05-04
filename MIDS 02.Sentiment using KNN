@@ -8,7 +8,6 @@
 !pip install scikit-learn
 '''
 
-
 import textblob
 import nltk
 import pandas as pd
