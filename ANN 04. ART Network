@@ -88,3 +88,46 @@ plt.title("ART Neural Network Clustering")
 plt.legend()
 plt.grid(True)
 plt.show()
+
+
+
+
+
+'''
+Main Loop Logic
+For each input:
+
+Activation is computed (dot product + bias).
+
+Normalization to create competition.
+
+Winner neuron is selected.
+
+If no neuron passes theta, a new cluster is made.
+
+Else, vigilance test:
+
+If passed, input is grouped into the existing cluster.
+
+If failed, new cluster is formed.
+
+
+Cluster Assignment Logic
+For each input vector:
+
+Calculate activations (W·X + bias)
+
+Normalize activations.
+
+Choose the winner neuron with the max activation.
+
+If activation is below theta, a new cluster is created.
+
+Else, check vigilance:
+
+If the similarity passes rho, update the cluster.
+
+Otherwise, create a new cluster.
+
+
+'''
