@@ -1,14 +1,16 @@
-''' Install necessary libraries 
-
-!pip install pandas
-!pip install scikit-learn
-!pip install numpy
-
-'''
-
+# Install necessary libraries
+# (Uncomment these if running in a fresh environment like Google Colab)
+# !pip install pandas
+# !pip install scikit-learn
+# !pip install numpy
 
 ###### Import necessary libraries ######
 import pandas as pd
+import numpy as np
+import time
+from sklearn import svm
+from sklearn.metrics import classification_report
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 ###### Load Data ######
 # Train Data
@@ -16,45 +18,55 @@ trainData = pd.read_csv(r"C:\Users\RATHO\Downloads\MIDS Dataset\train.csv")
 # Test Data
 testData = pd.read_csv(r"C:\Users\RATHO\Downloads\MIDS Dataset\test.csv")
 
-###### Shuffle and sample the dataset ######
-trainData.sample(frac=1).head(5)  # shuffle the df and pick first 5
+###### Shuffle and sample the dataset (optional) ######
+print("Sample shuffled data:\n", trainData.sample(frac=1).head(5))
 
 ###### Feature Extraction using TfidfVectorizer ######
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-# Create feature vectors
 vectorizer = TfidfVectorizer(min_df=5,
                              max_df=0.8,
                              sublinear_tf=True,
                              use_idf=True)
 
+# Fit and transform training data, transform test data
 train_vectors = vectorizer.fit_transform(trainData['Content'])
 test_vectors = vectorizer.transform(testData['Content'])
 
-###### Perform classification with SVM ######
-import time
-from sklearn import svm
-from sklearn.metrics import classification_report
-
-# Perform classification with SVM, kernel=linear
+###### Train the SVM Classifier ######
 classifier_linear = svm.SVC(kernel='linear')
+
+# Record training and prediction time
 t0 = time.time()
 classifier_linear.fit(train_vectors, trainData['Label'])
 t1 = time.time()
 prediction_linear = classifier_linear.predict(test_vectors)
 t2 = time.time()
 
-# Time taken for training and prediction
 time_linear_train = t1 - t0
 time_linear_predict = t2 - t1
 
-###### Results ######
-# Display training and prediction times
+###### Evaluation ######
+# Print timing
 print("Training time: %fs; Prediction time: %fs" % (time_linear_train, time_linear_predict))
 
 # Classification report
 report = classification_report(testData['Label'], prediction_linear, output_dict=True)
+print("\nPositive Class Report:\n", report['pos'])
+print("\nNegative Class Report:\n", report['neg'])
 
-# Display positive and negative label details
-print('Positive: ', report['pos'])
-print('Negative: ', report['neg'])
+###### Predicting Sentiment for New Example ######
+example_texts = [
+    "This product is absolutely amazing and works wonderfully!",   # Expected: pos
+    "I am very disappointed with the service and quality.",        # Expected: neg
+    "It was okay, not too bad but not great either."              # Depends on context
+]
+
+# Transform example texts
+example_vectors = vectorizer.transform(example_texts)
+
+# Predict
+example_predictions = classifier_linear.predict(example_vectors)
+
+# Output predictions
+print("\nExample Predictions:")
+for text, label in zip(example_texts, example_predictions):
+    print(f"Text: \"{text}\"\nPredicted Label: {label}\n")
