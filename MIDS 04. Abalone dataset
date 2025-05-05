@@ -96,11 +96,15 @@ age_comparison = pd.DataFrame({
     'Actual Age': y_test_age.values,
     'Predicted Age': y_pred_age
 })
-
+'''
+# ========= Add Print Output for Age Group Predictions =========
+print("\n--- Sample Predicted Age Groups vs Actual ---")
+for actual, predicted in zip(y_test_cls[:10], y_pred_cls[:10]):
+    print(f"Actual: {actual}, Predicted: {predicted}")
 # Display the first 10 rows
 print("\n--- Predicted vs Actual Age ---")
 print(age_comparison.head(10))
-
+'''
 
 plt.figure(figsize=(6, 4))
 plt.scatter(y_test_age, y_pred_age, alpha=0.5, color='teal')
