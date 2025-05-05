@@ -106,7 +106,26 @@ accuracy = np.mean(predictions == Y) * 100
 print(f"Accuracy: {accuracy:.2f}%")
 
 
+
+
 '''
+
+You created a neural network from scratch that:
+
+Initializes random weights.
+
+Passes inputs forward to get predictions.
+
+Measures how wrong it is using loss.
+
+Adjusts itself to reduce that error.
+
+Stops early if it stops improving.
+
+Then tests how well it learned.
+
+
+
 An epoch in machine learning refers to one complete pass through the entire training dataset. In the context of training a neural network, during each epoch, the following steps typically occur:
 
 Forward Propagation: The network makes predictions (outputs) based on the current weights and biases.
