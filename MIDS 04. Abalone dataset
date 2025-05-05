@@ -90,6 +90,18 @@ print("Mean Squared Error (Age Prediction):", mean_squared_error(y_test_age, y_p
 
 ######
 # ========= Plot: Actual vs Predicted Age =========
+
+# Show Predicted Age vs Actual Age side-by-side
+age_comparison = pd.DataFrame({
+    'Actual Age': y_test_age.values,
+    'Predicted Age': y_pred_age
+})
+
+# Display the first 10 rows
+print("\n--- Predicted vs Actual Age ---")
+print(age_comparison.head(10))
+
+
 plt.figure(figsize=(6, 4))
 plt.scatter(y_test_age, y_pred_age, alpha=0.5, color='teal')
 plt.xlabel('Actual Age')
