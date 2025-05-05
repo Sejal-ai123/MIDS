@@ -4,32 +4,41 @@ import matplotlib.pyplot as plt
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
+def tanh(z):
+    return np.tanh(z)
+
 def initialize_parameters(input_size, hidden_size, output_size):
-    np.random.seed(42)  # For reproducibility
+    np.random.seed(42)
     W1 = np.random.randn(hidden_size, input_size)
     b1 = np.zeros((hidden_size, 1))
     W2 = np.random.randn(output_size, hidden_size)
     b2 = np.zeros((output_size, 1))
     return W1, b1, W2, b2
 
-def forward_propagation(X, W1, b1, W2, b2):
+def forward_propagation(X, W1, b1, W2, b2, activation_func):
     Z1 = np.dot(W1, X) + b1
-    A1 = sigmoid(Z1)
+    A1 = tanh(Z1) if activation_func == 'tanh' else sigmoid(Z1)
     Z2 = np.dot(W2, A1) + b2
     A2 = sigmoid(Z2)
     return Z1, A1, Z2, A2
 
 def compute_loss(Y, A2):
     m = Y.shape[1]
-    loss = -np.sum(Y * np.log(A2) + (1 - Y) * np.log(1 - A2)) / m
+    loss = -np.sum(Y * np.log(A2 + 1e-8) + (1 - Y) * np.log(1 - A2 + 1e-8)) / m
     return loss
 
-def backward_propagation(X, Y, Z1, A1, A2, W2):
+def backward_propagation(X, Y, Z1, A1, A2, W2, activation_func):
     m = Y.shape[1]
     dZ2 = A2 - Y
     dW2 = np.dot(dZ2, A1.T) / m
     db2 = np.sum(dZ2, axis=1, keepdims=True) / m
-    dZ1 = np.dot(W2.T, dZ2) * (A1 * (1 - A1))
+    
+    if activation_func == 'tanh':
+        dA1 = 1 - A1**2
+    else:
+        dA1 = A1 * (1 - A1)
+
+    dZ1 = np.dot(W2.T, dZ2) * dA1
     dW1 = np.dot(dZ1, X.T) / m
     db1 = np.sum(dZ1, axis=1, keepdims=True) / m
     return dW1, db1, dW2, db2
@@ -41,22 +50,27 @@ def update_parameters(W1, b1, W2, b2, dW1, db1, dW2, db2, learning_rate):
     b2 -= learning_rate * db2
     return W1, b1, W2, b2
 
-def train(X, Y, hidden_size, output_size, learning_rate, num_epochs):
+def train(X, Y, hidden_size, output_size, learning_rate, num_epochs, activation_func='tanh', early_stop_thresh=1e-4):
     input_size = X.shape[0]
     W1, b1, W2, b2 = initialize_parameters(input_size, hidden_size, output_size)
     losses = []
-    
+
     for epoch in range(num_epochs):
-        Z1, A1, Z2, A2 = forward_propagation(X, W1, b1, W2, b2)
+        Z1, A1, Z2, A2 = forward_propagation(X, W1, b1, W2, b2, activation_func)
         loss = compute_loss(Y, A2)
         losses.append(loss)
-        dW1, db1, dW2, db2 = backward_propagation(X, Y, Z1, A1, A2, W2)
+
+        if epoch > 1 and abs(losses[-2] - loss) < early_stop_thresh:
+            print(f"Early stopping at epoch {epoch}, Loss stabilized at {loss:.5f}")
+            break
+
+        dW1, db1, dW2, db2 = backward_propagation(X, Y, Z1, A1, A2, W2, activation_func)
         W1, b1, W2, b2 = update_parameters(W1, b1, W2, b2, dW1, db1, dW2, db2, learning_rate)
-        
+
         if epoch % 1000 == 0:
             print(f"Epoch {epoch}, Loss: {loss:.5f}")
-    
-    # Plot loss graph
+
+    # Plot loss
     plt.plot(losses)
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
@@ -65,8 +79,8 @@ def train(X, Y, hidden_size, output_size, learning_rate, num_epochs):
     
     return W1, b1, W2, b2
 
-def predict(X, W1, b1, W2, b2):
-    _, _, _, A2 = forward_propagation(X, W1, b1, W2, b2)
+def predict(X, W1, b1, W2, b2, activation_func='tanh'):
+    _, _, _, A2 = forward_propagation(X, W1, b1, W2, b2, activation_func)
     return np.round(A2)
 
 # XOR dataset
@@ -74,17 +88,22 @@ X = np.array([[0, 0, 1, 1], [0, 1, 0, 1]])
 Y = np.array([[0, 1, 1, 0]])
 
 # Hyperparameters
-hidden_size = 2
+hidden_size = 4
 output_size = 1
-learning_rate = 0.1
+learning_rate = 1.0
 num_epochs = 10000
+activation_func = 'tanh'
 
-# Train model
-W1, b1, W2, b2 = train(X, Y, hidden_size, output_size, learning_rate, num_epochs)
+# Train
+W1, b1, W2, b2 = train(X, Y, hidden_size, output_size, learning_rate, num_epochs, activation_func)
 
-# Make predictions
-predictions = predict(X, W1, b1, W2, b2)
+# Predict
+predictions = predict(X, W1, b1, W2, b2, activation_func)
 print("Predictions:", predictions)
+
+# Accuracy
+accuracy = np.mean(predictions == Y) * 100
+print(f"Accuracy: {accuracy:.2f}%")
 
 
 '''
